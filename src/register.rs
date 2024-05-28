@@ -37,7 +37,7 @@ pub fn register(aum_id: &str, display_name: &str, icon_path: Option<&Path>) -> c
         assert!(!transaction.is_invalid());
 
         scopeguard::defer! {
-            CloseHandle(transaction);
+            let _ = CloseHandle(transaction);
         }
 
         let mut new_hkey = HKEY::default();
@@ -73,7 +73,7 @@ pub fn register(aum_id: &str, display_name: &str, icon_path: Option<&Path>) -> c
             RegDeleteValueW(new_hkey, &icon_uri_name).ok()?
         }
 
-        CommitTransaction(transaction).ok()?;
+        CommitTransaction(transaction).ok();
     }
 
     Ok(())

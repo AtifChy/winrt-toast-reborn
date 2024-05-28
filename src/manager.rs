@@ -1,7 +1,7 @@
 use windows::{
     core::{IInspectable, Interface, HSTRING},
     Data::Xml::Dom::XmlDocument,
-    Foundation::{PropertyValue, TypedEventHandler},
+    Foundation::{DateTime, IReference, PropertyValue, TypedEventHandler},
     Globalization::Calendar,
     UI::Notifications::{
         ToastActivatedEventArgs, ToastDismissalReason, ToastDismissedEventArgs,
@@ -198,7 +198,9 @@ impl ToastManager {
             let now = Calendar::new()?;
             now.AddSeconds(exp.as_secs() as i32)?;
             let dt = now.GetDateTime()?;
-            toast.SetExpirationTime(&PropertyValue::CreateDateTime(dt)?.cast()?)?;
+            toast.SetExpirationTime(
+                &PropertyValue::CreateDateTime(dt)?.cast::<IReference<DateTime>>()?,
+            )?;
         }
 
         if let Some(mut dismissed) = on_dismissed {

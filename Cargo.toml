@@ -1,6 +1,6 @@
 [package]
 name = "winrt-toast"
-version = "0.1.2"
+version = "0.1.5"
 edition = "2021"
 license = "MIT"
 authors = ["Harry Cheng <chengyuhui1@gmail.com>"]
@@ -13,11 +13,11 @@ repository = "https://github.com/chengyuhui/kdeconnect-rs/tree/main/winrt-toast"
 
 [dependencies]
 scopeguard = "1.1.0"
-thiserror = "1.0.32"
+thiserror = "1.0.61"
 url = "2.2.2"
 
 [dependencies.windows]
-version = "0.43.0"
+version = "0.56.0"
 features = [
     "Data_Xml_Dom",
     "Foundation",
