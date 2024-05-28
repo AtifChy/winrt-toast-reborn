@@ -130,7 +130,7 @@ impl Toast {
         self
     }
 
-    /// Set the expiration time of this toats, starting from the moment it is shown.
+    /// Set the expiration time of this toast, starting from the moment it is shown.
     ///
     /// After expiration, the toast will be removed from the Notification Center.
     pub fn expires_in(&mut self, duration: Duration) -> &mut Toast {

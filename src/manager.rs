@@ -18,7 +18,7 @@ use crate::{hs, Result, Toast, WinToastError};
 pub enum DismissalReason {
     /// The user dismissed the toast notification.
     UserCanceled,
-    /// The app explicitly hid the toast notification by calling the ToastNotifier.hide method.
+    /// The app explicitly hid the toast notification by calling the `ToastNotifier.hide` method.
     ApplicationHidden,
     /// The toast notification had been shown for the maximum allowed time and was faded out.
     /// The maximum time to show a toast notification is 7 seconds except in the case of long-duration toasts,
@@ -40,12 +40,12 @@ impl DismissalReason {
 /// An interface that provides access to the toast notification manager.
 ///
 /// This does not actually hold any Windows resource, but is used to
-/// store the Application User Model ID (AUMID)  that is required to access the toast notification manager.
+/// store the Application User Model ID (AUM_ID)  that is required to access the toast notification manager.
 ///
-/// You may register your own AUMID with this crate's `register` function, or
+/// You may register your own AUM_ID with this crate's `register` function, or
 /// use any method described in the [Windows documentation](https://docs.microsoft.com/en-us/windows/apps/design/shell/tiles-and-notifications/send-local-toast-desktop-cpp-wrl#step-5-register-with-notification-platform).
 ///
-/// Alternatively, you may use `{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe` as an experimental AUMID.
+/// Alternatively, you may use `{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe` as an experimental AUM_ID.
 #[derive(Clone)]
 pub struct ToastManager {
     app_id: HSTRING,

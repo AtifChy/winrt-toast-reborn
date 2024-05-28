@@ -41,7 +41,7 @@ impl ImageHintCrop {
 /// Specifies an image used in the toast template.
 #[derive(Debug, Clone)]
 pub struct Image {
-    src: url::Url,
+    src: Url,
     placement: Option<ImagePlacement>,
     hint_crop: Option<ImageHintCrop>,
     alt: Option<String>,
@@ -85,7 +85,7 @@ impl Image {
     }
 
     pub(crate) fn write_to_element(&self, id: u8, el: &XmlElement) -> crate::Result<()> {
-        el.SetAttribute(&hs("id"), &hs(&format!("{}", id)))?;
+        el.SetAttribute(&hs("id"), &hs(format!("{}", id)))?;
         el.SetAttribute(&hs("src"), &hs(&self.src))?;
         if let Some(placement) = self.placement {
             el.SetAttribute(&hs("placement"), &hs(placement.as_str()))?;

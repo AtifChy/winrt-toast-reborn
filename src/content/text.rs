@@ -46,12 +46,12 @@ impl Text {
     }
 
     /// Set the placement of the text to [`TextPlacement::Attribution`].
-    pub fn as_attribution(self) -> Self {
+    pub fn info_attribution(self) -> Self {
         self.with_placement(TextPlacement::Attribution)
     }
 
     pub(crate) fn write_to_element(&self, id: u8, el: &XmlElement) -> crate::Result<()> {
-        el.SetAttribute(&hs("id"), &hs(&format!("{}", id)))?;
+        el.SetAttribute(&hs("id"), &hs(format!("{}", id)))?;
         el.SetInnerText(&hs(&self.content))?;
         if let Some(placement) = self.placement {
             el.SetAttribute(&hs("placement"), &hs(placement.as_str()))?;

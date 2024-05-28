@@ -66,7 +66,7 @@ pub enum WinToastError {
     /// Error from the Windows Runtime.
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
-    /// The given path is not absolute, and therefore cannot be converted to an URL.
+    /// The given path is not absolute, and therefore cannot be converted to a URL.
     #[error("The given path is not absolute")]
     InvalidPath,
     /// The dismissal reason from OS is unknown
