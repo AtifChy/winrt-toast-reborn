@@ -134,7 +134,7 @@ impl Toast {
         self
     }
 
-    /// Use the button style for the actions.
+    /// Enable the use of button style for this toast.
     pub fn use_button_style(&mut self) -> &mut Toast {
         self.use_button_style = Some(UseButtonStyle(()));
         self

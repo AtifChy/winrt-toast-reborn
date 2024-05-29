@@ -3,6 +3,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
+use winrt_toast::content::action::HintButtonStyle;
 use winrt_toast::content::audio::{Audio, LoopingSound, Sound};
 use winrt_toast::content::image::{ImageHintCrop, ImagePlacement};
 use winrt_toast::content::text::TextPlacement;
@@ -32,8 +33,9 @@ fn main() -> Result<()> {
         .image(2, icon_image)
         .duration(ToastDuration::Long)
         .audio(Audio::new(Sound::Looping(LoopingSound::Alarm5)).with_looping())
-        .action(Action::new("Yes", "yes", ""))
-        .action(Action::new("No", "no", ""));
+        .use_button_style()
+        .action(Action::new("Yes", "yes", "").with_button_style(HintButtonStyle::Success))
+        .action(Action::new("No", "no", "").with_button_style(HintButtonStyle::Critical));
 
     let action_take = Arc::new(AtomicBool::new(false));
     let action_clone = Arc::clone(&action_take);

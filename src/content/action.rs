@@ -10,6 +10,8 @@ pub struct Action {
     r#type: String,
     activation_type: Option<ActivationType>,
     placement: Option<ActionPlacement>,
+    input_id: Option<String>,
+    button_style: Option<HintButtonStyle>,
 }
 
 impl Action {
@@ -32,6 +34,8 @@ impl Action {
             r#type: typ.into(),
             activation_type: None,
             placement: None,
+            button_style: None,
+            input_id: None,
         }
     }
 
@@ -47,6 +51,23 @@ impl Action {
         self
     }
 
+    /// The style of the action button.
+    ///
+    /// Requires [`Toast::use_button_style`] to be set in the toast.
+    pub fn with_button_style(mut self, button_style: HintButtonStyle) -> Self {
+        self.button_style = Some(button_style);
+        self
+    }
+
+    /// The ID of the input element that this action is associated with.
+    ///
+    /// This is used to associate the action with a specific input element in the toast.
+    /// Note: Input elements are not yet supported in this crate.
+    pub fn with_input_id(mut self, input_id: impl Into<String>) -> Self {
+        self.input_id = Some(input_id.into());
+        self
+    }
+
     pub(crate) fn write_to_element(&self, el: &XmlElement) -> crate::Result<()> {
         el.SetAttribute(&hs("content"), &hs(&self.content))?;
         el.SetAttribute(&hs("arguments"), &hs(&self.arguments))?;
@@ -56,6 +77,12 @@ impl Action {
         }
         if let Some(placement) = self.placement {
             el.SetAttribute(&hs("placement"), &hs(placement.as_str()))?;
+        }
+        if let Some(button_style) = self.button_style {
+            el.SetAttribute(&hs("hint-buttonStyle"), &hs(button_style.as_str()))?;
+        }
+        if let Some(input_id) = &self.input_id {
+            el.SetAttribute(&hs("hint-inputId"), &hs(input_id))?;
         }
 
         Ok(())
@@ -95,6 +122,24 @@ impl ActionPlacement {
     fn as_str(&self) -> &'static str {
         match self {
             ActionPlacement::ContextMenu => "contextMenu",
+        }
+    }
+}
+
+/// The style of the action button
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HintButtonStyle {
+    /// The button is styled as a success button.
+    Success,
+    /// The button is styled as a critical button.
+    Critical,
+}
+
+impl HintButtonStyle {
+    fn as_str(&self) -> &'static str {
+        match self {
+            HintButtonStyle::Success => "Success",
+            HintButtonStyle::Critical => "Critical",
         }
     }
 }
