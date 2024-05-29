@@ -14,7 +14,7 @@ repository = "https://github.com/chengyuhui/kdeconnect-rs/tree/main/winrt-toast"
 [dependencies]
 scopeguard = "1.1.0"
 thiserror = "1.0.61"
-url = "2.2.2"
+url = "2.5.0"
 
 [dependencies.windows]
 version = "0.56.0"
