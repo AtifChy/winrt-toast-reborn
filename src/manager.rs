@@ -251,6 +251,13 @@ impl ToastManager {
             // </binding>
         }
         // </visual>
+        // <audio>
+        if let Some(audio) = &toast.audio {
+            let audio_el = toast_doc.CreateElement(&hs("audio"))?;
+            toast_el.AppendChild(&audio_el)?;
+            audio.write_to_element(&audio_el)?;
+        }
+        // </audio>
         // <actions>
         if !toast.actions.is_empty() {
             let actions_el = toast_doc.CreateElement(&hs("actions"))?;

@@ -1,23 +1,37 @@
+use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
+use winrt_toast::content::audio::{Audio, LoopingSound, Sound};
+use winrt_toast::content::image::{ImageHintCrop, ImagePlacement};
 use winrt_toast::content::text::TextPlacement;
-use winrt_toast::{Action, DismissalReason, Text, Toast, ToastDuration, ToastManager};
+use winrt_toast::{
+    Action, DismissalReason, Image, Result, Text, Toast, ToastDuration, ToastManager,
+};
 
-const AUM_ID: &str =
-    "{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\\WindowsPowerShell\\v1.0\\powershell.exe";
-
-fn main() {
-    let manager = ToastManager::new(AUM_ID);
+fn main() -> Result<()> {
+    let manager = ToastManager::new(ToastManager::POWERSHELL_AUM_ID);
 
     let mut toast = Toast::new();
+
+    let hero_image =
+        Image::new_local(Path::new(env!("CARGO_MANIFEST_DIR")).join("resources/test/flower.jpeg"))?
+            .with_placement(ImagePlacement::Hero);
+
+    let icon_image =
+        Image::new_local(Path::new(env!("CARGO_MANIFEST_DIR")).join("resources/test/chick.jpeg"))?
+            .with_placement(ImagePlacement::AppLogoOverride)
+            .with_hint_crop(ImageHintCrop::Circle);
 
     toast
         .text1("Title")
         .text2(Text::new("Body"))
         .text3(Text::new("Via SMS").with_placement(TextPlacement::Attribution))
-        .duration(ToastDuration::Short)
+        .image(1, hero_image)
+        .image(2, icon_image)
+        .duration(ToastDuration::Long)
+        .audio(Audio::new(Sound::Looping(LoopingSound::Alarm5)).with_looping())
         .action(Action::new("Yes", "yes", ""))
         .action(Action::new("No", "no", ""));
 
@@ -47,10 +61,12 @@ fn main() {
         .expect("Failed to show toast");
 
     let time_instant = Instant::now();
-    while time_instant.elapsed() < Duration::from_secs(10) {
+    while time_instant.elapsed() < Duration::from_secs(25) {
         if action_take.load(Ordering::SeqCst) {
             break;
         }
         sleep(Duration::from_millis(100));
     }
+
+    Ok(())
 }

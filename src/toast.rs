@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 use std::{collections::HashMap, time::Duration};
 
+use crate::content::audio::Audio;
 use crate::{Action, Header, Image, Text};
 
 /// Represents a Windows toast.
@@ -19,6 +20,7 @@ pub struct Toast {
     pub(crate) scenario: Option<Scenario>,
     pub(crate) launch: Option<String>,
     pub(crate) duration: Option<ToastDuration>,
+    pub(crate) audio: Option<Audio>,
     pub(crate) actions: Vec<Action>,
 }
 
@@ -138,6 +140,12 @@ impl Toast {
         self.expires_in = Some(duration);
         self
     }
+
+    /// Set the audio for this toast.
+    pub fn audio(&mut self, audio: Audio) -> &mut Toast {
+        self.audio = Some(audio);
+        self
+    }
 }
 
 /// The scenario your toast is used for, like an alarm or reminder.
@@ -174,9 +182,9 @@ impl Scenario {
 /// The amount of time the toast should display
 #[derive(Debug, Clone)]
 pub enum ToastDuration {
-    /// The toast will display for a longer period of time.
+    /// The toast will display for 25 seconds.
     Long,
-    /// The toast will display for a shorter period of time.
+    /// The toast will display for 7 seconds.
     Short,
 }
 

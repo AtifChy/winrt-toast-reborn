@@ -1,5 +1,7 @@
 /// Action element
 pub mod action;
+/// Audio element
+pub mod audio;
 /// Header element
 pub mod header;
 /// Image element

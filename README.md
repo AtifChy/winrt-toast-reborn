@@ -28,6 +28,6 @@ fn main() {
 
 * [x] Button style and tooltips in actions
 * [x] Better callbacks
-* [ ] Sound
+* [x] Sound
 * [ ] Adaptive contents and data binding
 * [ ] Groups and subgroups
