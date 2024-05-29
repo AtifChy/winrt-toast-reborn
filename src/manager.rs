@@ -208,6 +208,10 @@ impl ToastManager {
             toast_el.SetAttribute(&hs("duration"), &hs(duration.as_str()))?;
         }
 
+        if let Some(use_button_style) = &toast.use_button_style {
+            toast_el.SetAttribute(&hs("useButtonStyle"), &hs(use_button_style.as_str()))?;
+        }
+
         // <header>
         if let Some(header) = &toast.header {
             let el = toast_doc.CreateElement(&hs("header"))?;

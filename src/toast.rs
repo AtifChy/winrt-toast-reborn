@@ -22,6 +22,7 @@ pub struct Toast {
     pub(crate) duration: Option<ToastDuration>,
     pub(crate) audio: Option<Audio>,
     pub(crate) actions: Vec<Action>,
+    pub(crate) use_button_style: Option<UseButtonStyle>,
 }
 
 impl Toast {
@@ -133,6 +134,12 @@ impl Toast {
         self
     }
 
+    /// Use the button style for the actions.
+    pub fn use_button_style(&mut self) -> &mut Toast {
+        self.use_button_style = Some(UseButtonStyle(()));
+        self
+    }
+
     /// Set the expiration time of this toast, starting from the moment it is shown.
     ///
     /// After expiration, the toast will be removed from the Notification Center.
@@ -142,6 +149,8 @@ impl Toast {
     }
 
     /// Set the audio for this toast.
+    ///
+    /// The audio will play when the toast is shown.
     pub fn audio(&mut self, audio: Audio) -> &mut Toast {
         self.audio = Some(audio);
         self
@@ -194,5 +203,14 @@ impl ToastDuration {
             ToastDuration::Long => "long",
             ToastDuration::Short => "short",
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct UseButtonStyle(());
+
+impl UseButtonStyle {
+    pub(crate) fn as_str(&self) -> &'static str {
+        "true"
     }
 }
