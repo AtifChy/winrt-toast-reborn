@@ -49,6 +49,7 @@ impl DismissalReason {
 #[derive(Clone)]
 pub struct ToastManager {
     app_id: HSTRING,
+    on_activated: Option<TypedEventHandler<ToastNotification, IInspectable>>,
 }
 
 impl std::fmt::Debug for ToastManager {
@@ -62,6 +63,7 @@ impl ToastManager {
     pub fn new(aum_id: impl AsRef<str>) -> Self {
         Self {
             app_id: hs(aum_id.as_ref()),
+            on_activated: None,
         }
     }
 
@@ -101,11 +103,37 @@ impl ToastManager {
         Ok(())
     }
 
+    /// Register a callback for when a toast notification is activated.
+    pub fn on_activated<F: FnMut(Option<String>) + Send + 'static>(mut self, mut f: F) -> Self {
+        self.on_activated = Some(TypedEventHandler::new(
+            move |_, args: &Option<IInspectable>| {
+                f(Self::get_activated_action(args));
+                Ok(())
+            },
+        ));
+        self
+    }
+
+    fn get_activated_action(inspect: &Option<IInspectable>) -> Option<String> {
+        let args = inspect
+            .as_ref()
+            .and_then(|arg| arg.cast::<ToastActivatedEventArgs>().ok());
+
+        args.and_then(|args| {
+            args.Arguments().map(|s| s.to_string()).ok().and_then(|s| {
+                if !s.is_empty() {
+                    Some(s)
+                } else {
+                    None
+                }
+            })
+        })
+    }
+
     /// Send a toast to Windows for display.
     pub fn show_with_callbacks(
         &self,
-        in_toast: &Toast,
-        on_activated: Option<Box<dyn FnMut(Result<String>) + Send + 'static>>,
+        toast: &Toast,
         on_dismissed: Option<Box<dyn FnMut(Result<DismissalReason>) + Send + 'static>>,
         on_failed: Option<Box<dyn FnMut(WinToastError) + Send + 'static>>,
     ) -> Result<()> {
@@ -116,20 +144,20 @@ impl ToastManager {
         let toast_el = toast_doc.CreateElement(&hs("toast"))?;
         toast_doc.AppendChild(&toast_el)?;
 
-        if let Some(scenario) = &in_toast.scenario {
+        if let Some(scenario) = &toast.scenario {
             toast_el.SetAttribute(&hs("scenario"), &hs(scenario.as_str()))?;
         }
 
-        if let Some(launch) = &in_toast.launch {
+        if let Some(launch) = &toast.launch {
             toast_el.SetAttribute(&hs("launch"), &hs(launch))?;
         }
 
-        if let Some(duration) = &in_toast.duration {
+        if let Some(duration) = &toast.duration {
             toast_el.SetAttribute(&hs("duration"), &hs(duration.as_str()))?;
         }
 
         // <header>
-        if let Some(header) = &in_toast.header {
+        if let Some(header) = &toast.header {
             let el = toast_doc.CreateElement(&hs("header"))?;
             toast_el.AppendChild(&el)?;
             header.write_to_element(&el)?;
@@ -145,23 +173,23 @@ impl ToastManager {
                 visual_el.AppendChild(&binding_el)?;
                 binding_el.SetAttribute(&hs("template"), &hs("ToastGeneric"))?;
                 {
-                    if let Some(text) = &in_toast.text.0 {
+                    if let Some(text) = &toast.text.0 {
                         let el = toast_doc.CreateElement(&hs("text"))?;
                         binding_el.AppendChild(&el)?;
                         text.write_to_element(1, &el)?;
                     }
-                    if let Some(text) = &in_toast.text.1 {
+                    if let Some(text) = &toast.text.1 {
                         let el = toast_doc.CreateElement(&hs("text"))?;
                         binding_el.AppendChild(&el)?;
                         text.write_to_element(2, &el)?;
                     }
-                    if let Some(text) = &in_toast.text.2 {
+                    if let Some(text) = &toast.text.2 {
                         let el = toast_doc.CreateElement(&hs("text"))?;
                         binding_el.AppendChild(&el)?;
                         text.write_to_element(3, &el)?;
                     }
 
-                    for (id, image) in &in_toast.images {
+                    for (id, image) in &toast.images {
                         let el = toast_doc.CreateElement(&hs("image"))?;
                         binding_el.AppendChild(&el)?;
                         image.write_to_element(*id, &el)?;
@@ -172,10 +200,10 @@ impl ToastManager {
         }
         // </visual>
         // <actions>
-        if !in_toast.actions.is_empty() {
+        if !toast.actions.is_empty() {
             let actions_el = toast_doc.CreateElement(&hs("actions"))?;
             toast_el.AppendChild(&actions_el)?;
-            for action in &in_toast.actions {
+            for action in &toast.actions {
                 let el = toast_doc.CreateElement(&hs("action"))?;
                 actions_el.AppendChild(&el)?;
                 action.write_to_element(&el)?;
@@ -183,28 +211,32 @@ impl ToastManager {
         }
         // </actions>
 
-        let toast = ToastNotification::CreateToastNotification(&toast_doc)?;
+        let toast_notifier = ToastNotification::CreateToastNotification(&toast_doc)?;
 
-        if let Some(group) = &in_toast.group {
-            toast.SetGroup(&hs(group))?;
+        if let Some(group) = &toast.group {
+            toast_notifier.SetGroup(&hs(group))?;
         }
-        if let Some(tag) = &in_toast.tag {
-            toast.SetTag(&hs(tag))?;
+        if let Some(tag) = &toast.tag {
+            toast_notifier.SetTag(&hs(tag))?;
         }
-        if let Some(remote_id) = &in_toast.remote_id {
-            toast.SetRemoteId(&hs(remote_id))?;
+        if let Some(remote_id) = &toast.remote_id {
+            toast_notifier.SetRemoteId(&hs(remote_id))?;
         }
-        if let Some(exp) = in_toast.expires_in {
+        if let Some(exp) = toast.expires_in {
             let now = Calendar::new()?;
             now.AddSeconds(exp.as_secs() as i32)?;
             let dt = now.GetDateTime()?;
-            toast.SetExpirationTime(
+            toast_notifier.SetExpirationTime(
                 &PropertyValue::CreateDateTime(dt)?.cast::<IReference<DateTime>>()?,
             )?;
         }
 
+        if let Some(handle) = &self.on_activated {
+            toast_notifier.Activated(handle)?;
+        }
+
         if let Some(mut dismissed) = on_dismissed {
-            toast.Dismissed(&TypedEventHandler::new(
+            toast_notifier.Dismissed(&TypedEventHandler::new(
                 move |_, args: &Option<ToastDismissedEventArgs>| {
                     if let Some(args) = args {
                         let arg = match args.Reason() {
@@ -219,7 +251,7 @@ impl ToastManager {
         }
 
         if let Some(mut failed) = on_failed {
-            toast.Failed(&TypedEventHandler::new(
+            toast_notifier.Failed(&TypedEventHandler::new(
                 move |_, args: &Option<ToastFailedEventArgs>| {
                     if let Some(args) = args {
                         let e = args.ErrorCode().and_then(|e| e.ok());
@@ -232,33 +264,13 @@ impl ToastManager {
             ))?;
         }
 
-        if let Some(mut activated) = on_activated {
-            toast.Activated(&TypedEventHandler::new(
-                move |_, args: &Option<IInspectable>| {
-                    let args = args
-                        .as_ref()
-                        .and_then(|arg| arg.cast::<ToastActivatedEventArgs>().ok());
-
-                    if let Some(args) = args {
-                        let arguments = args
-                            .Arguments()
-                            .map(|s| s.to_string_lossy())
-                            .map_err(|e| e.into());
-                        activated(arguments);
-                    }
-
-                    Ok(())
-                },
-            ))?;
-        }
-
-        notifier.Show(&toast)?;
+        notifier.Show(&toast_notifier)?;
 
         Ok(())
     }
 
     /// Send a toast to Windows for display without any callbacks.
     pub fn show(&self, in_toast: &Toast) -> Result<()> {
-        self.show_with_callbacks(in_toast, None, None, None)
+        self.show_with_callbacks(in_toast, None, None)
     }
 }

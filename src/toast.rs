@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::{collections::HashMap, time::Duration};
 
 use crate::{Action, Header, Image, Text};

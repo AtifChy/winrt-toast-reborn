@@ -20,7 +20,7 @@
 //!
 //! // Or you may add callbacks
 //! manager.show_with_callbacks(
-//!     &toast, None, None,
+//!     &toast, None,
 //!     Some(Box::new(move |e| {
 //!         // This will be called if Windows fails to show the toast.
 //!         eprintln!("Failed to show toast: {:?}", e);
