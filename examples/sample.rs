@@ -42,6 +42,7 @@ fn main() {
             }
             dismiss_clone.store(true, Ordering::SeqCst);
         })
+        .on_failed(|e| eprintln!("Error: {:?}", e))
         .show(&toast)
         .expect("Failed to show toast");
 

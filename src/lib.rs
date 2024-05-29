@@ -17,15 +17,6 @@
 //!     );
 //!
 //! manager.show(&toast).expect("Failed to show toast");
-//!
-//! // Or you may add callbacks
-//! manager.show_with_callbacks(
-//!     &toast,
-//!     Some(Box::new(move |e| {
-//!         // This will be called if Windows fails to show the toast.
-//!         eprintln!("Failed to show toast: {:?}", e);
-//!     }))
-//! ).expect("Failed to show toast");
 //! ```
 
 #![warn(missing_docs)]
@@ -72,6 +63,9 @@ pub enum WinToastError {
     /// The dismissal reason from OS is unknown
     #[error("The dismissal reason from OS is unknown")]
     InvalidDismissalReason,
+    /// The toast is not initialized properly.
+    #[error("Unknown error")]
+    Unknown,
 }
 
 /// The result type used in this crate.

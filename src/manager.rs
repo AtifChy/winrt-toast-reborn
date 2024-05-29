@@ -51,6 +51,7 @@ pub struct ToastManager {
     app_id: HSTRING,
     on_activated: Option<TypedEventHandler<ToastNotification, IInspectable>>,
     on_dismissed: Option<TypedEventHandler<ToastNotification, ToastDismissedEventArgs>>,
+    on_failed: Option<TypedEventHandler<ToastNotification, ToastFailedEventArgs>>,
 }
 
 impl std::fmt::Debug for ToastManager {
@@ -66,6 +67,7 @@ impl ToastManager {
             app_id: hs(aum_id.as_ref()),
             on_activated: None,
             on_dismissed: None,
+            on_failed: None,
         }
     }
 
@@ -106,7 +108,10 @@ impl ToastManager {
     }
 
     /// Register a callback for when a toast notification is activated.
-    pub fn on_activated<F: FnMut(Option<String>) + Send + 'static>(mut self, mut f: F) -> Self {
+    pub fn on_activated<F>(mut self, mut f: F) -> Self
+    where
+        F: FnMut(Option<String>) + Send + 'static,
+    {
         self.on_activated = Some(TypedEventHandler::new(
             move |_, args: &Option<IInspectable>| {
                 f(Self::get_activated_action(args));
@@ -133,7 +138,10 @@ impl ToastManager {
     }
 
     /// Register a callback for when a toast notification is dismissed.
-    pub fn on_dismissed<F: Fn(Result<DismissalReason>) + Send + 'static>(mut self, f: F) -> Self {
+    pub fn on_dismissed<F>(mut self, f: F) -> Self
+    where
+        F: Fn(Result<DismissalReason>) + Send + 'static,
+    {
         self.on_dismissed = Some(TypedEventHandler::new(
             move |_, args: &Option<ToastDismissedEventArgs>| {
                 f(Self::get_dismissal_reason(args));
@@ -151,11 +159,35 @@ impl ToastManager {
         }
     }
 
+    /// Register a callback for when a toast notification fails to display.
+    pub fn on_failed<F>(mut self, f: F) -> Self
+    where
+        F: Fn(WinToastError) + Send + 'static,
+    {
+        self.on_failed = Some(TypedEventHandler::new(
+            move |_, args: &Option<ToastFailedEventArgs>| {
+                f(Self::get_failed_error(args));
+                Ok(())
+            },
+        ));
+        self
+    }
+
+    fn get_failed_error(args: &Option<ToastFailedEventArgs>) -> WinToastError {
+        let err = args.as_ref().and_then(|e| e.ErrorCode().ok());
+        if let Some(e) = err {
+            if e.is_err() {
+                return WinToastError::Os(e.into());
+            }
+        }
+        WinToastError::Unknown
+    }
+
     /// Send a toast to Windows for display.
     pub fn show_with_callbacks(
         &self,
         toast: &Toast,
-        on_failed: Option<Box<dyn FnMut(WinToastError) + Send + 'static>>,
+        // on_failed: Option<Box<dyn FnMut(WinToastError) + Send + 'static>>,
     ) -> Result<()> {
         let notifier = ToastNotificationManager::CreateToastNotifierWithId(&self.app_id)?;
 
@@ -259,7 +291,9 @@ impl ToastManager {
             toast_notifier.Dismissed(handler)?;
         }
 
-        if let Some(mut failed) = on_failed {
+        if let Some(handler) = &self.on_failed {
+            toast_notifier.Failed(handler)?;
+            /*
             toast_notifier.Failed(&TypedEventHandler::new(
                 move |_, args: &Option<ToastFailedEventArgs>| {
                     if let Some(args) = args {
@@ -271,6 +305,7 @@ impl ToastManager {
                     Ok(())
                 },
             ))?;
+            */
         }
 
         notifier.Show(&toast_notifier)?;
@@ -280,6 +315,6 @@ impl ToastManager {
 
     /// Send a toast to Windows for display without any callbacks.
     pub fn show(&self, in_toast: &Toast) -> Result<()> {
-        self.show_with_callbacks(in_toast, None)
+        self.show_with_callbacks(in_toast)
     }
 }
