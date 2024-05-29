@@ -50,6 +50,7 @@ impl DismissalReason {
 pub struct ToastManager {
     app_id: HSTRING,
     on_activated: Option<TypedEventHandler<ToastNotification, IInspectable>>,
+    on_dismissed: Option<TypedEventHandler<ToastNotification, ToastDismissedEventArgs>>,
 }
 
 impl std::fmt::Debug for ToastManager {
@@ -64,6 +65,7 @@ impl ToastManager {
         Self {
             app_id: hs(aum_id.as_ref()),
             on_activated: None,
+            on_dismissed: None,
         }
     }
 
@@ -130,11 +132,29 @@ impl ToastManager {
         })
     }
 
+    /// Register a callback for when a toast notification is dismissed.
+    pub fn on_dismissed<F: Fn(Result<DismissalReason>) + Send + 'static>(mut self, f: F) -> Self {
+        self.on_dismissed = Some(TypedEventHandler::new(
+            move |_, args: &Option<ToastDismissedEventArgs>| {
+                f(Self::get_dismissal_reason(args));
+                Ok(())
+            },
+        ));
+        self
+    }
+
+    fn get_dismissal_reason(args: &Option<ToastDismissedEventArgs>) -> Result<DismissalReason> {
+        let args = args.as_ref().and_then(|arg| arg.Reason().ok());
+        match args {
+            Some(reason) => DismissalReason::from_winrt(reason),
+            None => Err(WinToastError::InvalidDismissalReason),
+        }
+    }
+
     /// Send a toast to Windows for display.
     pub fn show_with_callbacks(
         &self,
         toast: &Toast,
-        on_dismissed: Option<Box<dyn FnMut(Result<DismissalReason>) + Send + 'static>>,
         on_failed: Option<Box<dyn FnMut(WinToastError) + Send + 'static>>,
     ) -> Result<()> {
         let notifier = ToastNotificationManager::CreateToastNotifierWithId(&self.app_id)?;
@@ -231,23 +251,12 @@ impl ToastManager {
             )?;
         }
 
-        if let Some(handle) = &self.on_activated {
-            toast_notifier.Activated(handle)?;
+        if let Some(handler) = &self.on_activated {
+            toast_notifier.Activated(handler)?;
         }
 
-        if let Some(mut dismissed) = on_dismissed {
-            toast_notifier.Dismissed(&TypedEventHandler::new(
-                move |_, args: &Option<ToastDismissedEventArgs>| {
-                    if let Some(args) = args {
-                        let arg = match args.Reason() {
-                            Ok(r) => DismissalReason::from_winrt(r),
-                            Err(e) => Err(e.into()),
-                        };
-                        dismissed(arg);
-                    }
-                    Ok(())
-                },
-            ))?;
+        if let Some(handler) = &self.on_dismissed {
+            toast_notifier.Dismissed(handler)?;
         }
 
         if let Some(mut failed) = on_failed {
@@ -271,6 +280,6 @@ impl ToastManager {
 
     /// Send a toast to Windows for display without any callbacks.
     pub fn show(&self, in_toast: &Toast) -> Result<()> {
-        self.show_with_callbacks(in_toast, None, None)
+        self.show_with_callbacks(in_toast, None)
     }
 }
