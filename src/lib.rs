@@ -5,7 +5,7 @@
 //! use winrt_toast::{Toast, Text, Header, ToastManager};
 //! use winrt_toast::content::text::TextPlacement;
 //!
-//! let manager = ToastManager::new("YourCompany.YourApp");
+//! let manager = ToastManager::new(ToastManager::POWERSHELL_AUM_ID);
 //!
 //! let mut toast = Toast::new();
 //! toast

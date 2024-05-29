@@ -61,6 +61,10 @@ impl std::fmt::Debug for ToastManager {
 }
 
 impl ToastManager {
+    /// The AUM_ID for the Windows PowerShell executable.
+    pub const POWERSHELL_AUM_ID: &'static str =
+        "{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\\WindowsPowerShell\\v1.0\\powershell.exe";
+
     /// Create a new manager with
     pub fn new(aum_id: impl AsRef<str>) -> Self {
         Self {
