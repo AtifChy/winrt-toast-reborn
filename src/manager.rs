@@ -184,11 +184,7 @@ impl ToastManager {
     }
 
     /// Send a toast to Windows for display.
-    pub fn show_with_callbacks(
-        &self,
-        toast: &Toast,
-        // on_failed: Option<Box<dyn FnMut(WinToastError) + Send + 'static>>,
-    ) -> Result<()> {
+    pub fn show(&self, toast: &Toast) -> Result<()> {
         let notifier = ToastNotificationManager::CreateToastNotifierWithId(&self.app_id)?;
 
         let toast_doc = XmlDocument::new()?;
@@ -293,28 +289,10 @@ impl ToastManager {
 
         if let Some(handler) = &self.on_failed {
             toast_notifier.Failed(handler)?;
-            /*
-            toast_notifier.Failed(&TypedEventHandler::new(
-                move |_, args: &Option<ToastFailedEventArgs>| {
-                    if let Some(args) = args {
-                        let e = args.ErrorCode().and_then(|e| e.ok());
-                        if let Err(e) = e {
-                            failed(e.into())
-                        }
-                    }
-                    Ok(())
-                },
-            ))?;
-            */
         }
 
         notifier.Show(&toast_notifier)?;
 
         Ok(())
-    }
-
-    /// Send a toast to Windows for display without any callbacks.
-    pub fn show(&self, in_toast: &Toast) -> Result<()> {
-        self.show_with_callbacks(in_toast)
     }
 }
