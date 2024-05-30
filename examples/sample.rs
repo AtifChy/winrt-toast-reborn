@@ -3,12 +3,12 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
-use winrt_toast::content::action::HintButtonStyle;
 use winrt_toast::content::audio::{Audio, LoopingSound, Sound};
 use winrt_toast::content::image::{ImageHintCrop, ImagePlacement};
+use winrt_toast::content::input::InputType;
 use winrt_toast::content::text::TextPlacement;
 use winrt_toast::{
-    Action, DismissalReason, Image, Result, Text, Toast, ToastDuration, ToastManager,
+    Action, DismissalReason, Image, Input, Result, Text, Toast, ToastDuration, ToastManager,
 };
 
 fn main() -> Result<()> {
@@ -33,22 +33,24 @@ fn main() -> Result<()> {
         .image(2, icon_image)
         .duration(ToastDuration::Long)
         .audio(Audio::new(Sound::Looping(LoopingSound::Alarm5)).with_looping())
-        .use_button_style()
-        .action(Action::new("Yes", "yes", "").with_button_style(HintButtonStyle::Success))
-        .action(Action::new("No", "no", "").with_button_style(HintButtonStyle::Critical));
+        .input(Input::new("box", InputType::Text).with_placeholder("Type here..."))
+        .action(Action::new("Send", "send", "").with_input_id("box"));
 
     let action_take = Arc::new(AtomicBool::new(false));
     let action_clone = Arc::clone(&action_take);
     let dismiss_clone = Arc::clone(&action_take);
 
     manager
-        .on_activated(move |action| {
-            match action {
-                Some(action) => println!("You've clicked {}!", action),
-                None => println!("You've clicked me!"),
-            }
-            action_clone.store(true, Ordering::SeqCst);
-        })
+        .on_activated(
+            move |action| {
+                match action {
+                    Some(action) => println!("You've clicked {}!", action),
+                    None => println!("You've clicked me!"),
+                }
+                action_clone.store(true, Ordering::SeqCst);
+            },
+            Some("box"),
+        )
         .on_dismissed(move |reason| {
             match reason {
                 Ok(DismissalReason::UserCanceled) => println!("UserCanceled"),

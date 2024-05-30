@@ -24,8 +24,10 @@
 /// Contents in a toast notification.
 pub mod content;
 pub use content::action::Action;
+pub use content::audio::Audio;
 pub use content::header::Header;
 pub use content::image::Image;
+pub use content::input::Input;
 pub use content::text::Text;
 
 mod manager;

@@ -6,5 +6,7 @@ pub mod audio;
 pub mod header;
 /// Image element
 pub mod image;
+/// Input element
+pub mod input;
 /// Text element
 pub mod text;

@@ -1,8 +1,7 @@
 use std::fmt::Debug;
 use std::{collections::HashMap, time::Duration};
 
-use crate::content::audio::Audio;
-use crate::{Action, Header, Image, Text};
+use crate::{Action, Audio, Header, Image, Input, Text};
 
 /// Represents a Windows toast.
 ///
@@ -22,6 +21,7 @@ pub struct Toast {
     pub(crate) duration: Option<ToastDuration>,
     pub(crate) audio: Option<Audio>,
     pub(crate) actions: Vec<Action>,
+    pub(crate) input: Option<Input>,
     pub(crate) use_button_style: Option<UseButtonStyle>,
 }
 
@@ -77,6 +77,12 @@ impl Toast {
     /// The number of available image positions is based on the template definition.
     pub fn image(&mut self, id: u8, image: Image) -> &mut Toast {
         self.images.insert(id, image);
+        self
+    }
+
+    /// Add an input field to the toast.
+    pub fn input(&mut self, input: Input) -> &mut Toast {
+        self.input = Some(input);
         self
     }
 

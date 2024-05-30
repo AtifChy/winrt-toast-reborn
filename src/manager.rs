@@ -112,13 +112,17 @@ impl ToastManager {
     }
 
     /// Register a callback for when a toast notification is activated.
-    pub fn on_activated<F>(mut self, mut f: F) -> Self
+    pub fn on_activated<F>(mut self, mut f: F, input_id: Option<impl Into<String>>) -> Self
     where
         F: FnMut(Option<String>) + Send + 'static,
     {
+        let input_id = input_id.map(|id| id.into());
         self.on_activated = Some(TypedEventHandler::new(
             move |_, args: &Option<IInspectable>| {
-                f(Self::get_activated_action(args));
+                match &input_id {
+                    Some(id) => f(Self::get_activated_input(args, id)),
+                    None => f(Self::get_activated_action(args)),
+                }
                 Ok(())
             },
         ));
@@ -139,6 +143,27 @@ impl ToastManager {
                 }
             })
         })
+    }
+
+    fn get_activated_input(
+        inspect: &Option<IInspectable>,
+        input_id: impl Into<String>,
+    ) -> Option<String> {
+        let args = inspect
+            .as_ref()
+            .and_then(|arg| arg.cast::<ToastActivatedEventArgs>().ok())
+            .and_then(|args| args.UserInput().ok());
+
+        if let Some(value_set) = args {
+            value_set
+                .Lookup(&hs(input_id.into()))
+                .and_then(|args| args.cast::<IReference<HSTRING>>())
+                .ok()
+                .and_then(|args| args.Value().ok())
+                .map(|s| s.to_string())
+        } else {
+            None
+        }
     }
 
     /// Register a callback for when a toast notification is dismissed.
@@ -266,6 +291,11 @@ impl ToastManager {
         if !toast.actions.is_empty() {
             let actions_el = toast_doc.CreateElement(&hs("actions"))?;
             toast_el.AppendChild(&actions_el)?;
+            if let Some(input) = &toast.input {
+                let el = toast_doc.CreateElement(&hs("input"))?;
+                actions_el.AppendChild(&el)?;
+                input.write_to_element(&el)?;
+            }
             for action in &toast.actions {
                 let el = toast_doc.CreateElement(&hs("action"))?;
                 actions_el.AppendChild(&el)?;
