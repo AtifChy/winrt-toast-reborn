@@ -52,8 +52,6 @@ impl Action {
     }
 
     /// The style of the action button.
-    ///
-    /// Requires [`Toast::use_button_style`] to be set in the toast.
     pub fn with_button_style(mut self, button_style: HintButtonStyle) -> Self {
         self.button_style = Some(button_style);
         self
