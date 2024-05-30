@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 use std::{collections::HashMap, time::Duration};
 
-use crate::{Action, Audio, Header, Image, Input, Text};
+use crate::{Action, Audio, Header, Image, Input, Selection, Text};
 
 /// Represents a Windows toast.
 ///
@@ -22,6 +22,7 @@ pub struct Toast {
     pub(crate) audio: Option<Audio>,
     pub(crate) actions: Vec<Action>,
     pub(crate) input: Option<Input>,
+    pub(crate) selections: Vec<Selection>,
     pub(crate) use_button_style: Option<UseButtonStyle>,
 }
 
@@ -83,6 +84,12 @@ impl Toast {
     /// Add an input field to the toast.
     pub fn input(&mut self, input: Input) -> &mut Toast {
         self.input = Some(input);
+        self
+    }
+
+    /// Add a selection field to the toast.
+    pub fn selection(&mut self, selection: Selection) -> &mut Toast {
+        self.selections.push(selection);
         self
     }
 

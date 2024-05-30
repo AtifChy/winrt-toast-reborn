@@ -132,7 +132,7 @@ impl ToastManager {
     where
         F: FnMut(Option<ActivatedAction>) + Send + 'static,
     {
-        let id: String = input_id.map_or_else(|| "".to_string(), |s| s.to_string());
+        let id = input_id.map_or("".to_string(), |s| s.to_string());
         self.on_activated = Some(TypedEventHandler::new(
             move |_, args: &Option<IInspectable>| {
                 f(Self::get_activated_action(args, id.clone()));
@@ -292,19 +292,32 @@ impl ToastManager {
         }
         // </audio>
         // <actions>
-        if !toast.actions.is_empty() {
+        if toast.input.is_some() || !toast.actions.is_empty() {
             let actions_el = toast_doc.CreateElement(&hs("actions"))?;
             toast_el.AppendChild(&actions_el)?;
+            // <input>
             if let Some(input) = &toast.input {
-                let el = toast_doc.CreateElement(&hs("input"))?;
-                actions_el.AppendChild(&el)?;
-                input.write_to_element(&el)?;
+                let input_el = toast_doc.CreateElement(&hs("input"))?;
+                actions_el.AppendChild(&input_el)?;
+                input.write_to_element(&input_el)?;
+                // <selection>
+                {
+                    for selection in &toast.selections {
+                        let el = toast_doc.CreateElement(&hs("selection"))?;
+                        input_el.AppendChild(&el)?;
+                        selection.write_to_element(&el)?;
+                    }
+                }
+                // </selection>
             }
+            // </input>
+            // <action>
             for action in &toast.actions {
                 let el = toast_doc.CreateElement(&hs("action"))?;
                 actions_el.AppendChild(&el)?;
                 action.write_to_element(&el)?;
             }
+            // </action>
         }
         // </actions>
 

@@ -8,8 +8,8 @@ use winrt_toast::content::image::{ImageHintCrop, ImagePlacement};
 use winrt_toast::content::input::InputType;
 use winrt_toast::content::text::TextPlacement;
 use winrt_toast::{
-    Action, ActivatedAction, DismissalReason, Image, Input, Result, Text, Toast, ToastDuration,
-    ToastManager,
+    Action, ActivatedAction, DismissalReason, Image, Input, Result, Selection, Text, Toast,
+    ToastDuration, ToastManager,
 };
 
 fn main() -> Result<()> {
@@ -27,6 +27,7 @@ fn main() -> Result<()> {
             .with_hint_crop(ImageHintCrop::Circle);
 
     toast
+        .tag("example")
         .text1("Title")
         .text2(Text::new("Body"))
         .text3(Text::new("Via SMS").with_placement(TextPlacement::Attribution))
@@ -34,7 +35,14 @@ fn main() -> Result<()> {
         .image(2, icon_image)
         .duration(ToastDuration::Long)
         .audio(Audio::new(Sound::Looping(LoopingSound::Alarm5)).with_looping())
-        .input(Input::new("box", InputType::Text).with_placeholder("Type here..."))
+        .input(
+            Input::new("box", InputType::Selection)
+                .with_title("Select an option")
+                .with_default_input("breakfast"),
+        )
+        .selection(Selection::new("breakfast", "Breakfast"))
+        .selection(Selection::new("lunch", "Lunch"))
+        .selection(Selection::new("dinner", "Dinner"))
         .action(Action::new("Send", "send", "").with_input_id("box"))
         .action(Action::new("Dismiss", "dismiss", ""));
 

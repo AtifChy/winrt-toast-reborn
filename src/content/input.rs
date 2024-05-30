@@ -8,6 +8,7 @@ pub struct Input {
     type_: InputType,
     place_holder: Option<String>,
     title: Option<String>,
+    default_input: Option<String>,
 }
 
 impl Input {
@@ -18,6 +19,7 @@ impl Input {
             type_,
             place_holder: None,
             title: None,
+            default_input: None,
         }
     }
 
@@ -33,6 +35,12 @@ impl Input {
         self
     }
 
+    /// The default input of the input.
+    pub fn with_default_input(mut self, default_input: impl Into<String>) -> Self {
+        self.default_input = Some(default_input.into());
+        self
+    }
+
     pub(crate) fn write_to_element(&self, el: &XmlElement) -> crate::Result<()> {
         el.SetAttribute(&hs("id"), &hs(&self.id))?;
         el.SetAttribute(&hs("type"), &hs(self.type_.as_str()))?;
@@ -41,6 +49,9 @@ impl Input {
         }
         if let Some(title) = &self.title {
             el.SetAttribute(&hs("title"), &hs(title))?;
+        }
+        if let Some(default_input) = &self.default_input {
+            el.SetAttribute(&hs("defaultInput"), &hs(default_input))?;
         }
 
         Ok(())
@@ -62,5 +73,29 @@ impl InputType {
             InputType::Text => "text",
             InputType::Selection => "selection",
         }
+    }
+}
+
+/// Represents a selection in a selection input field.
+#[derive(Debug, Clone)]
+pub struct Selection {
+    id: String,
+    content: String,
+}
+
+impl Selection {
+    /// Create a new selection.
+    pub fn new(id: impl Into<String>, content: impl Into<String>) -> Self {
+        Self {
+            id: id.into(),
+            content: content.into(),
+        }
+    }
+
+    pub(crate) fn write_to_element(&self, el: &XmlElement) -> crate::Result<()> {
+        el.SetAttribute(&hs("id"), &hs(&self.id))?;
+        el.SetAttribute(&hs("content"), &hs(&self.content))?;
+
+        Ok(())
     }
 }
