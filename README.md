@@ -1,4 +1,4 @@
-# winrt-toast
+# winrt-toast-reborn
 
 A mostly usable binding to the Windows `ToastNotification` API.
 
