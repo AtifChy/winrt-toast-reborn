@@ -62,7 +62,6 @@ impl Action {
     /// The ID of the input element that this action is associated with.
     ///
     /// This is used to associate the action with a specific input element in the toast.
-    /// Note: Input elements are not yet supported in this crate.
     pub fn with_input_id(mut self, input_id: impl Into<String>) -> Self {
         self.input_id = Some(input_id.into());
         self

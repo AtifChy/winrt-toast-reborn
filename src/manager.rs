@@ -11,6 +11,22 @@ use windows::{
 
 use crate::{hs, Result, Toast, WinToastError};
 
+/// Represents an action that was activated by the user.
+/// This is passed to the `on_activated` callback.
+///
+/// # Fields
+///
+/// * `arg`: The argument string that was passed to the action.
+/// * `value`: The string that was passed to the input field.
+#[derive(Debug, Clone, Default)]
+pub struct ActivatedAction {
+    /// The argument string that was passed to the action.
+    pub arg: String,
+    /// The string that was passed to the input field.
+    /// This is only present if the action was associated with an input field.
+    pub value: Option<String>,
+}
+
 /// Specifies the reason that a toast notification is no longer being shown
 ///
 /// See <https://docs.microsoft.com/en-us/uwp/api/windows.ui.notifications.toastdismissalreason>
@@ -112,58 +128,46 @@ impl ToastManager {
     }
 
     /// Register a callback for when a toast notification is activated.
-    pub fn on_activated<F>(mut self, mut f: F, input_id: Option<impl Into<String>>) -> Self
+    pub fn on_activated<F>(mut self, input_id: Option<&str>, mut f: F) -> Self
     where
-        F: FnMut(Option<String>) + Send + 'static,
+        F: FnMut(Option<ActivatedAction>) + Send + 'static,
     {
-        let input_id = input_id.map(|id| id.into());
+        let id: String = input_id.map_or_else(|| "".to_string(), |s| s.to_string());
         self.on_activated = Some(TypedEventHandler::new(
             move |_, args: &Option<IInspectable>| {
-                match &input_id {
-                    Some(id) => f(Self::get_activated_input(args, id)),
-                    None => f(Self::get_activated_action(args)),
-                }
+                f(Self::get_activated_action(args, id.clone()));
                 Ok(())
             },
         ));
         self
     }
 
-    fn get_activated_action(inspect: &Option<IInspectable>) -> Option<String> {
+    fn get_activated_action(
+        inspect: &Option<IInspectable>,
+        input_id: String,
+    ) -> Option<ActivatedAction> {
         let args = inspect
             .as_ref()
             .and_then(|arg| arg.cast::<ToastActivatedEventArgs>().ok());
 
-        args.and_then(|args| {
-            args.Arguments().map(|s| s.to_string()).ok().and_then(|s| {
-                if !s.is_empty() {
-                    Some(s)
-                } else {
-                    None
-                }
-            })
+        let button_arg = args
+            .clone()
+            .and_then(|args| args.Arguments().ok())
+            .map(|s| s.to_string())
+            .filter(|s| !s.is_empty());
+
+        let user_input = args
+            .and_then(|args| args.UserInput().ok())
+            .and_then(|value_set| value_set.Lookup(&hs(input_id)).ok())
+            .and_then(|args| args.cast::<IReference<HSTRING>>().ok())
+            .and_then(|args| args.Value().ok())
+            .map(|s| s.to_string())
+            .filter(|s| !s.is_empty());
+
+        Some(ActivatedAction {
+            arg: button_arg?,
+            value: user_input,
         })
-    }
-
-    fn get_activated_input(
-        inspect: &Option<IInspectable>,
-        input_id: impl Into<String>,
-    ) -> Option<String> {
-        let args = inspect
-            .as_ref()
-            .and_then(|arg| arg.cast::<ToastActivatedEventArgs>().ok())
-            .and_then(|args| args.UserInput().ok());
-
-        if let Some(value_set) = args {
-            value_set
-                .Lookup(&hs(input_id.into()))
-                .and_then(|args| args.cast::<IReference<HSTRING>>())
-                .ok()
-                .and_then(|args| args.Value().ok())
-                .map(|s| s.to_string())
-        } else {
-            None
-        }
     }
 
     /// Register a callback for when a toast notification is dismissed.

@@ -8,7 +8,8 @@ use winrt_toast::content::image::{ImageHintCrop, ImagePlacement};
 use winrt_toast::content::input::InputType;
 use winrt_toast::content::text::TextPlacement;
 use winrt_toast::{
-    Action, DismissalReason, Image, Input, Result, Text, Toast, ToastDuration, ToastManager,
+    Action, ActivatedAction, DismissalReason, Image, Input, Result, Text, Toast, ToastDuration,
+    ToastManager,
 };
 
 fn main() -> Result<()> {
@@ -34,23 +35,38 @@ fn main() -> Result<()> {
         .duration(ToastDuration::Long)
         .audio(Audio::new(Sound::Looping(LoopingSound::Alarm5)).with_looping())
         .input(Input::new("box", InputType::Text).with_placeholder("Type here..."))
-        .action(Action::new("Send", "send", "").with_input_id("box"));
+        .action(Action::new("Send", "send", "").with_input_id("box"))
+        .action(Action::new("Dismiss", "dismiss", ""));
 
+    // Clone the action take atomic bool for the closures
+    // This is necessary because the closures are Fn/FnMut,
+    // and we need to be able to modify the action_take bool
+    // from within the closures
     let action_take = Arc::new(AtomicBool::new(false));
     let action_clone = Arc::clone(&action_take);
     let dismiss_clone = Arc::clone(&action_take);
 
+    fn handle_activated_action(action: Option<ActivatedAction>) {
+        match action {
+            Some(action) => {
+                let message = format!(
+                    "You clicked on {}{}!",
+                    action.arg,
+                    action
+                        .value
+                        .map_or(String::new(), |value| format!(", input = {}", value))
+                );
+                println!("{}", message);
+            }
+            None => println!("You clicked me!"),
+        }
+    }
+
     manager
-        .on_activated(
-            move |action| {
-                match action {
-                    Some(action) => println!("You've clicked {}!", action),
-                    None => println!("You've clicked me!"),
-                }
-                action_clone.store(true, Ordering::SeqCst);
-            },
-            Some("box"),
-        )
+        .on_activated(Some("box"), move |action| {
+            handle_activated_action(action);
+            action_clone.store(true, Ordering::SeqCst);
+        })
         .on_dismissed(move |reason| {
             match reason {
                 Ok(DismissalReason::UserCanceled) => println!("UserCanceled"),
@@ -64,6 +80,7 @@ fn main() -> Result<()> {
         .show(&toast)
         .expect("Failed to show toast");
 
+    // Wait for the user to interact with the toast
     let time_instant = Instant::now();
     while time_instant.elapsed() < Duration::from_secs(25) {
         if action_take.load(Ordering::SeqCst) {

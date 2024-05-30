@@ -31,7 +31,7 @@ pub use content::input::Input;
 pub use content::text::Text;
 
 mod manager;
-pub use manager::{DismissalReason, ToastManager};
+pub use manager::{ActivatedAction, DismissalReason, ToastManager};
 
 mod toast;
 pub use toast::{Scenario, Toast, ToastDuration};
