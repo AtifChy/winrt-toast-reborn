@@ -1,5 +1,9 @@
 # winrt-toast-reborn
 
+[![Crates.io](https://img.shields.io/crates/v/winrt-toast-reborn)](https://crates.io/crates/winrt-toast-reborn)
+[![Docs.rs](https://docs.rs/winrt-toast-reborn/badge.svg)](https://docs.rs/winrt-toast-reborn)
+[![License](https://img.shields.io/crates/l/winrt-toast-reborn)](LICENSE)
+
 A mostly usable binding to the Windows `ToastNotification` API.
 
 ## Example
