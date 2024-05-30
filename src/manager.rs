@@ -18,7 +18,7 @@ use crate::{hs, Result, Toast, WinToastError};
 ///
 /// * `arg`: The argument string that was passed to the action.
 /// * `value`: The string that was passed to the input field.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct ActivatedAction {
     /// The argument string that was passed to the action.
     pub arg: String,
