@@ -2,8 +2,8 @@
 //!
 //! # Example
 //! ```no_run
-//! use winrt_toast::{Toast, Text, Header, ToastManager};
-//! use winrt_toast::content::text::TextPlacement;
+//! use winrt_toast_reborn::{Toast, Text, Header, ToastManager};
+//! use winrt_toast_reborn::content::text::TextPlacement;
 //!
 //! let manager = ToastManager::new(ToastManager::POWERSHELL_AUM_ID);
 //!
@@ -23,6 +23,7 @@
 
 /// Contents in a toast notification.
 pub mod content;
+
 pub use content::action::Action;
 pub use content::audio::Audio;
 pub use content::header::Header;
@@ -30,6 +31,7 @@ pub use content::image::Image;
 pub use content::input::Input;
 pub use content::input::Selection;
 pub use content::text::Text;
+use thiserror::Error;
 
 mod manager;
 pub use manager::{ActivatedAction, DismissalReason, ToastManager};
@@ -51,7 +53,7 @@ pub(crate) fn hs(s: impl AsRef<str>) -> HSTRING {
 }
 
 /// The error type used in this crate.
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Error)]
 #[non_exhaustive]
 pub enum WinToastError {
     /// External error from the Windows API.

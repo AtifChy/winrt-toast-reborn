@@ -1,6 +1,6 @@
 [package]
 name = "winrt-toast-reborn"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 license = "MIT"
 authors = ["Harry Cheng <chengyuhui1@gmail.com>", "Atif Chowdhury <iftakhar.awal@gmail.com>"]
@@ -12,12 +12,12 @@ repository = "https://github.com/AtifChy/winrt-toast.git"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-scopeguard = "1.1.0"
-thiserror = "1.0.61"
-url = "2.5.0"
+scopeguard = "1.2"
+thiserror = "1.0"
+url = "2.5"
 
 [dependencies.windows]
-version = "0.56.0"
+version = "0.56"
 features = [
     "Data_Xml_Dom",
     "Foundation",

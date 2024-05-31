@@ -3,12 +3,12 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
-use winrt_toast_reborn::content::audio::{Audio, LoopingSound, Sound};
+use winrt_toast_reborn::content::audio::{LoopingSound, Sound};
 use winrt_toast_reborn::content::image::{ImageHintCrop, ImagePlacement};
 use winrt_toast_reborn::content::input::InputType;
 use winrt_toast_reborn::content::text::TextPlacement;
 use winrt_toast_reborn::{
-    Action, ActivatedAction, DismissalReason, Image, Input, Result, Selection, Text, Toast,
+    Action, ActivatedAction, Audio, DismissalReason, Image, Input, Result, Selection, Text, Toast,
     ToastDuration, ToastManager,
 };
 
