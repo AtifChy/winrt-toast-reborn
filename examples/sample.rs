@@ -77,9 +77,12 @@ fn main() -> Result<()> {
         })
         .on_dismissed(move |reason| {
             match reason {
-                Ok(DismissalReason::UserCanceled) => println!("UserCanceled"),
-                Ok(DismissalReason::ApplicationHidden) => println!("ApplicationHidden"),
-                Ok(DismissalReason::TimedOut) => println!("TimedOut"),
+                Ok(r) if r.reason == DismissalReason::UserCanceled => println!("UserCanceled"),
+                Ok(r) if r.reason == DismissalReason::ApplicationHidden => {
+                    println!("ApplicationHidden")
+                }
+                Ok(r) if r.reason == DismissalReason::TimedOut => println!("TimedOut"),
+                Ok(r) => println!("Unknown dismissal reason"),
                 Err(e) => eprintln!("Error: {:?}", e),
             }
             dismiss_clone.store(true, Ordering::SeqCst);

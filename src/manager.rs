@@ -16,15 +16,35 @@ use crate::{hs, Result, Toast, WinToastError};
 ///
 /// # Fields
 ///
+/// * `tag`: The toast notification tag.
 /// * `arg`: The argument string that was passed to the action.
 /// * `value`: The string that was passed to the input field.
 #[derive(Debug, Clone)]
 pub struct ActivatedAction {
+    /// The Tag associated with the originating toast.
+    /// This is only present if a tag was explicitly set for the toast notification.
+    pub tag: Option<String>,
     /// The argument string that was passed to the action.
     pub arg: String,
     /// The string that was passed to the input field.
     /// This is only present if the action was associated with an input field.
     pub value: Option<String>,
+}
+
+/// Represents the dismissal of a toast notification.
+/// This is passed to the `on_dismissed` callback.
+///
+/// # Fields
+///
+/// * `tag`: The toast notification tag.
+/// * `reason`: The reason for the toast dismissal.
+#[derive(Debug, Clone)]
+pub struct ToastDismissed {
+    /// The Tag associated with the originating toast.
+    /// This is only present if a tag was explicitly set for the toast notification.
+    pub tag: Option<String>,
+    /// The reason for the toast dismissal.
+    pub reason: DismissalReason,
 }
 
 /// Specifies the reason that a toast notification is no longer being shown
@@ -51,6 +71,22 @@ impl DismissalReason {
             _ => Err(WinToastError::InvalidDismissalReason),
         }
     }
+}
+
+/// Represents an error trying to show a toast notification.
+/// This is passed to the `on_failed` callback.
+///
+/// # Fields
+///
+/// * `tag`: The toast notification tag.
+/// * `error`: The error encountered.
+#[derive(Debug)]
+pub struct ToastFailed {
+    /// The Tag associated with the originating toast.
+    /// This is only present if a tag was explicitly set for the toast notification.
+    pub tag: Option<String>,
+    /// The error encountered.
+    pub error: WinToastError,
 }
 
 /// An interface that provides access to the toast notification manager.
@@ -134,8 +170,8 @@ impl ToastManager {
     {
         let id = input_id.map_or("".to_string(), |s| s.to_string());
         self.on_activated = Some(TypedEventHandler::new(
-            move |_, args: &Option<IInspectable>| {
-                f(Self::get_activated_action(args, id.clone()));
+            move |tn, args: &Option<IInspectable>| {
+                f(Self::get_activated_action(tn, args, id.clone()));
                 Ok(())
             },
         ));
@@ -143,9 +179,15 @@ impl ToastManager {
     }
 
     fn get_activated_action(
+        toast: &Option<ToastNotification>,
         inspect: &Option<IInspectable>,
         input_id: String,
     ) -> Option<ActivatedAction> {
+        let tag = toast
+            .as_ref()
+            .and_then(|t| t.Tag().ok())
+            .map(|s| s.to_string());
+
         let args = inspect
             .as_ref()
             .and_then(|arg| arg.cast::<ToastActivatedEventArgs>().ok());
@@ -165,6 +207,7 @@ impl ToastManager {
             .filter(|s| !s.is_empty());
 
         Some(ActivatedAction {
+            tag,
             arg: button_arg?,
             value: user_input,
         })
@@ -173,47 +216,66 @@ impl ToastManager {
     /// Register a callback for when a toast notification is dismissed.
     pub fn on_dismissed<F>(mut self, f: F) -> Self
     where
-        F: Fn(Result<DismissalReason>) + Send + 'static,
+        F: Fn(Result<ToastDismissed>) + Send + 'static,
     {
         self.on_dismissed = Some(TypedEventHandler::new(
-            move |_, args: &Option<ToastDismissedEventArgs>| {
-                f(Self::get_dismissal_reason(args));
+            move |tn, args: &Option<ToastDismissedEventArgs>| {
+                f(Self::get_dismissal_reason(tn, args));
                 Ok(())
             },
         ));
         self
     }
 
-    fn get_dismissal_reason(args: &Option<ToastDismissedEventArgs>) -> Result<DismissalReason> {
-        let args = args.as_ref().and_then(|arg| arg.Reason().ok());
-        match args {
-            Some(reason) => DismissalReason::from_winrt(reason),
-            None => Err(WinToastError::InvalidDismissalReason),
-        }
+    fn get_dismissal_reason(
+        toast: &Option<ToastNotification>,
+        args: &Option<ToastDismissedEventArgs>,
+    ) -> Result<ToastDismissed> {
+        let tag = toast
+            .as_ref()
+            .and_then(|t| t.Tag().ok())
+            .map(|s| s.to_string());
+
+        let Some(winrt_reason) = args.as_ref().and_then(|arg| arg.Reason().ok()) else {
+            return Err(WinToastError::InvalidDismissalReason);
+        };
+
+        Ok(ToastDismissed {
+            tag,
+            reason: DismissalReason::from_winrt(winrt_reason)?,
+        })
     }
 
     /// Register a callback for when a toast notification fails to display.
     pub fn on_failed<F>(mut self, f: F) -> Self
     where
-        F: Fn(WinToastError) + Send + 'static,
+        F: Fn(ToastFailed) + Send + 'static,
     {
         self.on_failed = Some(TypedEventHandler::new(
-            move |_, args: &Option<ToastFailedEventArgs>| {
-                f(Self::get_failed_error(args));
+            move |tn, args: &Option<ToastFailedEventArgs>| {
+                f(Self::get_failed_error(tn, args));
                 Ok(())
             },
         ));
         self
     }
 
-    fn get_failed_error(args: &Option<ToastFailedEventArgs>) -> WinToastError {
-        let err = args.as_ref().and_then(|e| e.ErrorCode().ok());
-        if let Some(e) = err {
-            if e.is_err() {
-                return WinToastError::Os(e.into());
-            }
-        }
-        WinToastError::Unknown
+    fn get_failed_error(
+        toast: &Option<ToastNotification>,
+        args: &Option<ToastFailedEventArgs>,
+    ) -> ToastFailed {
+        let tag = toast
+            .as_ref()
+            .and_then(|t| t.Tag().ok())
+            .map(|s| s.to_string());
+
+        let error = args
+            .as_ref()
+            .and_then(|e| e.ErrorCode().ok())
+            .filter(|e| e.is_err())
+            .map(|e| WinToastError::Os(e.into()))
+            .unwrap_or(WinToastError::Unknown);
+        ToastFailed { tag, error }
     }
 
     /// Send a toast to Windows for display.
