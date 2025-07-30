@@ -33,8 +33,8 @@ pub use content::input::Selection;
 pub use content::text::Text;
 use thiserror::Error;
 
-pub mod manager;
-pub use manager::{ActivatedAction, DismissalReason, ToastManager};
+mod manager;
+pub use manager::{ActivatedAction, DismissalReason, ToastDismissed, ToastFailed, ToastManager};
 
 mod toast;
 pub use toast::{Scenario, Toast, ToastDuration};
