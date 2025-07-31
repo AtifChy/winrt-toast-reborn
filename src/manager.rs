@@ -31,7 +31,7 @@ pub struct ActivatedAction {
     /// The values that were passed to the input fields.
     pub values: HashMap<String, String>,
     /// This is only present if the action was associated with an input field.
-    pub input_id: String,
+    pub input_id: Option<String>,
 }
 
 /// Represents the dismissal of a toast notification.
@@ -171,7 +171,7 @@ impl ToastManager {
     where
         F: FnMut(Option<ActivatedAction>) + Send + 'static,
     {
-        let id = input_id.map_or("".to_string(), |s| s.to_string());
+        let id = input_id.map(|s| s.to_string());
         self.on_activated = Some(TypedEventHandler::new(
             move |tn, args: &Option<IInspectable>| {
                 f(Self::get_activated_action(tn, args, id.clone()));
@@ -184,7 +184,7 @@ impl ToastManager {
     fn get_activated_action(
         toast: &Option<ToastNotification>,
         inspect: &Option<IInspectable>,
-        input_id: String,
+        input_id: Option<String>,
     ) -> Option<ActivatedAction> {
         let tag = toast
             .as_ref()
