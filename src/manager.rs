@@ -207,18 +207,14 @@ impl ToastManager {
                 value_set
                     .into_iter()
                     .filter_map(|pair| {
-                        // Now, process each key-value pair
-                        if let (Ok(key), Ok(value)) = (pair.Key(), pair.Value()) {
-                            if let Ok(value_ref) = value.cast::<IReference<HSTRING>>() {
-                                if let Ok(value_hstring) = value_ref.Value() {
-                                    let value_str = value_hstring.to_string();
-                                    if !value_str.is_empty() {
-                                        return Some((key.to_string(), value_str));
-                                    }
-                                }
-                            }
+                        let key = pair.Key().ok()?.to_string();
+                        let value_ref = pair.Value().ok()?.cast::<IReference<HSTRING>>().ok()?;
+                        let value_str = value_ref.Value().ok()?.to_string();
+
+                        if value_str.is_empty() {
+                            return None;
                         }
-                        None
+                        Some((key, value_str))
                     })
                     .collect()
             })
