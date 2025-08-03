@@ -34,7 +34,7 @@ pub use content::text::Text;
 use thiserror::Error;
 
 mod manager;
-pub use manager::{ActivatedAction, DismissalReason, ToastManager};
+pub use manager::{ActivatedAction, DismissalReason, ToastDismissed, ToastFailed, ToastManager};
 
 mod toast;
 pub use toast::{Scenario, Toast, ToastDuration};
