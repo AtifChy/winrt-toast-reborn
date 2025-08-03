@@ -9,8 +9,8 @@ A mostly usable binding to the Windows `ToastNotification` API.
 ## Example
 
 ```rust
-use winrt_toast::{Toast, Text, Header, ToastManager};
-use winrt_toast::content::text::TextPlacement;
+use winrt_toast_reborn::{Toast, Text, Header, ToastManager};
+use winrt_toast_reborn::content::text::TextPlacement;
 
 fn main() {
     let manager = ToastManager::new(ToastManager::POWERSHELL_AUM_ID);
