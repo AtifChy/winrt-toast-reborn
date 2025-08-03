@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use windows::{
     core::{IInspectable, Interface, HSTRING},
     Data::Xml::Dom::XmlDocument,
@@ -26,9 +28,10 @@ pub struct ActivatedAction {
     pub tag: Option<String>,
     /// The argument string that was passed to the action.
     pub arg: String,
-    /// The string that was passed to the input field.
+    /// The values that were passed to the input fields.
+    pub values: HashMap<String, String>,
     /// This is only present if the action was associated with an input field.
-    pub value: Option<String>,
+    pub input_id: Option<String>,
 }
 
 /// Represents the dismissal of a toast notification.
@@ -168,7 +171,7 @@ impl ToastManager {
     where
         F: FnMut(Option<ActivatedAction>) + Send + 'static,
     {
-        let id = input_id.map_or("".to_string(), |s| s.to_string());
+        let id = input_id.map(|s| s.to_string());
         self.on_activated = Some(TypedEventHandler::new(
             move |tn, args: &Option<IInspectable>| {
                 f(Self::get_activated_action(tn, args, id.clone()));
@@ -181,7 +184,7 @@ impl ToastManager {
     fn get_activated_action(
         toast: &Option<ToastNotification>,
         inspect: &Option<IInspectable>,
-        input_id: String,
+        input_id: Option<String>,
     ) -> Option<ActivatedAction> {
         let tag = toast
             .as_ref()
@@ -198,18 +201,30 @@ impl ToastManager {
             .map(|s| s.to_string())
             .filter(|s| !s.is_empty());
 
-        let user_input = args
+        let user_input: HashMap<String, String> = args
             .and_then(|args| args.UserInput().ok())
-            .and_then(|value_set| value_set.Lookup(&hs(input_id)).ok())
-            .and_then(|args| args.cast::<IReference<HSTRING>>().ok())
-            .and_then(|args| args.Value().ok())
-            .map(|s| s.to_string())
-            .filter(|s| !s.is_empty());
+            .map(|value_set| {
+                value_set
+                    .into_iter()
+                    .filter_map(|pair| {
+                        let key = pair.Key().ok()?.to_string();
+                        let value_ref = pair.Value().ok()?.cast::<IReference<HSTRING>>().ok()?;
+                        let value_str = value_ref.Value().ok()?.to_string();
+
+                        if value_str.is_empty() {
+                            return None;
+                        }
+                        Some((key, value_str))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
 
         Some(ActivatedAction {
             tag,
             arg: button_arg?,
-            value: user_input,
+            values: user_input,
+            input_id,
         })
     }
 
