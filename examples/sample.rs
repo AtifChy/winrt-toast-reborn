@@ -18,11 +18,11 @@ fn main() -> Result<()> {
     let mut toast = Toast::new();
 
     let hero_image =
-        Image::new_local(Path::new(env!("CARGO_MANIFEST_DIR")).join("resources/test/flower.jpeg"))?
+        Image::new_local(Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/images/flower.jpg"))?
             .with_placement(ImagePlacement::Hero);
 
     let icon_image =
-        Image::new_local(Path::new(env!("CARGO_MANIFEST_DIR")).join("resources/test/chick.jpeg"))?
+        Image::new_local(Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/images/cat.jpg"))?
             .with_placement(ImagePlacement::AppLogoOverride)
             .with_hint_crop(ImageHintCrop::Circle);
 
