@@ -3,7 +3,10 @@ name = "winrt-toast-reborn"
 version = "0.2.1"
 edition = "2021"
 license = "MIT"
-authors = ["Harry Cheng <chengyuhui1@gmail.com>", "Atif Chowdhury <iftakhar.awal@gmail.com>"]
+authors = [
+    "Harry Cheng <chengyuhui1@gmail.com>",
+    "Atif Chowdhury <iftakhar.awal@gmail.com>",
+]
 description = "A toast notification library for Windows 10 and 11."
 keywords = ["notification", "windows", "toast", "notify"]
 categories = ["os::windows-apis", "gui"]
@@ -13,11 +16,11 @@ repository = "https://github.com/AtifChy/winrt-toast.git"
 
 [dependencies]
 scopeguard = "1.2"
-thiserror = "1.0"
+thiserror = "2.0"
 url = "2.5"
 
 [dependencies.windows]
-version = "0.56"
+version = "0.61"
 features = [
     "Data_Xml_Dom",
     "Foundation",

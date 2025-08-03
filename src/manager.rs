@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use windows::{
-    core::{IInspectable, Interface, HSTRING},
+    core::{IInspectable, Interface, Ref, HSTRING},
     Data::Xml::Dom::XmlDocument,
     Foundation::{DateTime, IReference, PropertyValue, TypedEventHandler},
     Globalization::Calendar,
@@ -173,7 +173,7 @@ impl ToastManager {
     {
         let id = input_id.map(|s| s.to_string());
         self.on_activated = Some(TypedEventHandler::new(
-            move |tn, args: &Option<IInspectable>| {
+            move |tn: Ref<'_, ToastNotification>, args: Ref<'_, IInspectable>| {
                 f(Self::get_activated_action(tn, args, id.clone()));
                 Ok(())
             },
@@ -182,8 +182,8 @@ impl ToastManager {
     }
 
     fn get_activated_action(
-        toast: &Option<ToastNotification>,
-        inspect: &Option<IInspectable>,
+        toast: Ref<'_, ToastNotification>,
+        inspect: Ref<'_, IInspectable>,
         input_id: Option<String>,
     ) -> Option<ActivatedAction> {
         let tag = toast
@@ -234,7 +234,7 @@ impl ToastManager {
         F: Fn(Result<ToastDismissed>) + Send + 'static,
     {
         self.on_dismissed = Some(TypedEventHandler::new(
-            move |tn, args: &Option<ToastDismissedEventArgs>| {
+            move |tn: Ref<'_, ToastNotification>, args: Ref<'_, ToastDismissedEventArgs>| {
                 f(Self::get_dismissal_reason(tn, args));
                 Ok(())
             },
@@ -243,8 +243,8 @@ impl ToastManager {
     }
 
     fn get_dismissal_reason(
-        toast: &Option<ToastNotification>,
-        args: &Option<ToastDismissedEventArgs>,
+        toast: Ref<'_, ToastNotification>,
+        args: Ref<'_, ToastDismissedEventArgs>,
     ) -> Result<ToastDismissed> {
         let tag = toast
             .as_ref()
@@ -267,7 +267,7 @@ impl ToastManager {
         F: Fn(ToastFailed) + Send + 'static,
     {
         self.on_failed = Some(TypedEventHandler::new(
-            move |tn, args: &Option<ToastFailedEventArgs>| {
+            move |tn: Ref<'_, ToastNotification>, args: Ref<'_, ToastFailedEventArgs>| {
                 f(Self::get_failed_error(tn, args));
                 Ok(())
             },
@@ -276,8 +276,8 @@ impl ToastManager {
     }
 
     fn get_failed_error(
-        toast: &Option<ToastNotification>,
-        args: &Option<ToastFailedEventArgs>,
+        toast: Ref<'_, ToastNotification>,
+        args: Ref<'_, ToastFailedEventArgs>,
     ) -> ToastFailed {
         let tag = toast
             .as_ref()

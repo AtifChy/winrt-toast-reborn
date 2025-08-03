@@ -21,7 +21,7 @@ use crate::WinToastError;
 /// For more information on AUM_ID and registration, see this
 /// [Windows documentation](https://docs.microsoft.com/en-us/windows/apps/design/shell/tiles-and-notifications/send-local-toast-desktop-cpp-wrl#step-5-register-with-notification-platform).
 pub fn register(aum_id: &str, display_name: &str, icon_path: Option<&Path>) -> crate::Result<()> {
-    let registry_path = HSTRING::from(format!("SOFTWARE\\Classes\\AppUserModelId\\{}", aum_id));
+    let registry_path = HSTRING::from(format!("SOFTWARE\\Classes\\AppUserModelId\\{aum_id}"));
     let display_name = to_utf16(display_name);
     let icon_path = if let Some(path) = icon_path {
         if !path.is_absolute() {
@@ -44,7 +44,7 @@ pub fn register(aum_id: &str, display_name: &str, icon_path: Option<&Path>) -> c
         RegCreateKeyTransactedW(
             HKEY_CURRENT_USER,
             &registry_path,
-            0,
+            Some(0),
             PCWSTR::null(),
             REG_OPTION_NON_VOLATILE,
             KEY_ALL_ACCESS,
@@ -60,7 +60,7 @@ pub fn register(aum_id: &str, display_name: &str, icon_path: Option<&Path>) -> c
         RegSetValueExW(
             new_hkey,
             &HSTRING::from("DisplayName"),
-            0,
+            Some(0),
             REG_SZ,
             Some(&display_name),
         )
@@ -68,7 +68,7 @@ pub fn register(aum_id: &str, display_name: &str, icon_path: Option<&Path>) -> c
 
         let icon_uri_name = HSTRING::from("IconUri");
         if let Some(icon_path) = icon_path {
-            RegSetValueExW(new_hkey, &icon_uri_name, 0, REG_SZ, Some(&icon_path)).ok()?;
+            RegSetValueExW(new_hkey, &icon_uri_name, Some(0), REG_SZ, Some(&icon_path)).ok()?;
         } else {
             RegDeleteValueW(new_hkey, &icon_uri_name).ok()?
         }

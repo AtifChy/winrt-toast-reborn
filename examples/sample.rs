@@ -63,9 +63,9 @@ fn main() -> Result<()> {
                     action
                         .values
                         .get(&action.input_id.unwrap_or_default())
-                        .map_or(String::new(), |value| format!(", input = {}", value))
+                        .map_or(String::new(), |value| format!(", input = {value}"))
                 );
-                println!("{}", message);
+                println!("{message}");
             }
             None => println!("You clicked me!"),
         }
@@ -83,12 +83,12 @@ fn main() -> Result<()> {
                     println!("ApplicationHidden")
                 }
                 Ok(r) if r.reason == DismissalReason::TimedOut => println!("TimedOut"),
-                Ok(r) => println!("Unknown dismissal reason"),
-                Err(e) => eprintln!("Error: {:?}", e),
+                Ok(_r) => println!("Unknown dismissal reason"),
+                Err(e) => eprintln!("Error: {e:?}"),
             }
             dismiss_clone.store(true, Ordering::SeqCst);
         })
-        .on_failed(|e| eprintln!("Error: {:?}", e))
+        .on_failed(|e| eprintln!("Error: {e:?}"))
         .show(&toast)
         .expect("Failed to show toast");
 
