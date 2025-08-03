@@ -42,8 +42,8 @@ impl Toast {
     ///
     /// # Example
     /// ```rust
-    /// # use winrt_toast::{Toast, Text};
-    /// # use winrt_toast::content::text::TextPlacement;
+    /// # use winrt_toast_reborn::{Toast, Text};
+    /// # use winrt_toast_reborn::content::text::TextPlacement;
     /// # let mut toast = Toast::new();
     /// // You can use anything that is Into<String>
     /// toast.text1("text");
