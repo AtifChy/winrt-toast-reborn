@@ -167,6 +167,48 @@ impl ToastManager {
     }
 
     /// Register a callback for when a toast notification is activated.
+    ///
+    /// The callback will be called when the user interacts with the toast notification,
+    /// such as clicking a button or submitting input.
+    ///
+    /// # Parameters
+    ///
+    /// * `input_id` - Optional input field ID to associate with the callback
+    /// * `f` - Callback function that receives an [`ActivatedAction`] when the toast is activated
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use winrt_toast_reborn::ToastManager;
+    /// use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+    ///
+    /// let activated = Arc::new(AtomicBool::new(false));
+    /// let activated_clone = Arc::clone(&activated);
+    ///
+    /// let manager = ToastManager::new("aum_id")
+    ///     .on_activated(None, move |action| {
+    ///         if let Some(action) = action {
+    ///             println!("Toast activated with arg: {}", action.arg);
+    ///             activated_clone.store(true, Ordering::SeqCst);
+    ///         }
+    ///     });
+    /// ```
+    ///
+    /// With input field:
+    ///
+    /// ```
+    /// use winrt_toast_reborn::ToastManager;
+    ///
+    /// let manager = ToastManager::new("aum_id")
+    ///     .on_activated(Some("user_input"), move |action| {
+    ///         if let Some(action) = action {
+    ///             println!("Button clicked: {}", action.arg);
+    ///             if let Some(text) = action.values.get("user_input") {
+    ///                 println!("User entered: {}", text);
+    ///             }
+    ///         }
+    ///     });
+    /// ```
     pub fn on_activated<F>(mut self, input_id: Option<&str>, mut f: F) -> Self
     where
         F: FnMut(Option<ActivatedAction>) + Send + 'static,
@@ -229,6 +271,50 @@ impl ToastManager {
     }
 
     /// Register a callback for when a toast notification is dismissed.
+    ///
+    /// The callback will be called when the toast is dismissed for any reason,
+    /// including user cancellation, timeout, or application hiding the toast.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - Callback function that receives a `Result<ToastDismissed>` when the toast is dismissed
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use winrt_toast_reborn::{ToastManager, DismissalReason};
+    ///
+    /// let manager = ToastManager::new("aum_id")
+    ///     .on_dismissed(|result| {
+    ///         match result {
+    ///             Ok(dismissed) => {
+    ///                 match dismissed.reason {
+    ///                     DismissalReason::UserCanceled => println!("User dismissed the toast"),
+    ///                     DismissalReason::TimedOut => println!("Toast timed out"),
+    ///                     DismissalReason::ApplicationHidden => println!("App hid the toast"),
+    ///                 }
+    ///                 if let Some(tag) = dismissed.tag {
+    ///                     println!("Toast with tag '{}' was dismissed", tag);
+    ///                 }
+    ///             }
+    ///             Err(error) => eprintln!("Error getting dismissal reason: {:?}", error),
+    ///         }
+    ///     });
+    /// ```
+    ///
+    /// Simple example with basic logging:
+    ///
+    /// ```
+    /// use winrt_toast_reborn::ToastManager;
+    ///
+    /// let manager = ToastManager::new("aum_id")
+    ///     .on_dismissed(|result| {
+    ///         match result {
+    ///             Ok(dismissed) => println!("Toast dismissed: {:?}", dismissed.reason),
+    ///             Err(e) => eprintln!("Dismissal error: {:?}", e),
+    ///         }
+    ///     });
+    /// ```
     pub fn on_dismissed<F>(mut self, f: F) -> Self
     where
         F: Fn(Result<ToastDismissed>) + Send + 'static,
@@ -433,5 +519,37 @@ impl ToastManager {
         notifier.Show(&toast_notifier)?;
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_toast_manager_new() {
+        let manager = ToastManager::new("test_aum_id");
+        assert_eq!(manager.app_id, hs("test_aum_id"));
+
+        let debug_str = format!("{manager:?}");
+        assert_eq!(debug_str, "ToastManager(test_aum_id)");
+    }
+
+    #[test]
+    fn test_callback_registration() {
+        let manager = ToastManager::new("test_aum_id")
+            .on_activated(None, |_action| {
+                // test activation callback
+            })
+            .on_dismissed(|_dismissed| {
+                // test dismissal callback
+            })
+            .on_failed(|_failed| {
+                // test failure callback
+            });
+
+        assert!(manager.on_activated.is_some());
+        assert!(manager.on_dismissed.is_some());
+        assert!(manager.on_failed.is_some());
     }
 }

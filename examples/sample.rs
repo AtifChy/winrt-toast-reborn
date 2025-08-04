@@ -46,7 +46,7 @@ fn main() -> Result<()> {
         .action(Action::new("Send", "send", "").with_input_id("box"))
         .action(Action::new("Dismiss", "dismiss", ""));
 
-    // Clone the action take atomic bool for the closures
+    // Clone the action_take atomic bool for the closures
     // This is necessary because the closures are Fn/FnMut,
     // and we need to be able to modify the action_take bool
     // from within the closures
