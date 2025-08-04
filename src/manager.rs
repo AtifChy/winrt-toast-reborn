@@ -216,7 +216,7 @@ impl ToastManager {
         let id = input_id.map(|s| s.to_string());
         self.on_activated = Some(TypedEventHandler::new(
             move |tn: Ref<'_, ToastNotification>, args: Ref<'_, IInspectable>| {
-                f(Self::get_activated_action(tn, args, id.clone()));
+                f(Self::get_activated_action(tn, args, id.as_deref()));
                 Ok(())
             },
         ));
@@ -226,7 +226,7 @@ impl ToastManager {
     fn get_activated_action(
         toast: Ref<'_, ToastNotification>,
         inspect: Ref<'_, IInspectable>,
-        input_id: Option<String>,
+        input_id: Option<&str>,
     ) -> Option<ActivatedAction> {
         let tag = toast
             .as_ref()
@@ -238,7 +238,7 @@ impl ToastManager {
             .and_then(|arg| arg.cast::<ToastActivatedEventArgs>().ok());
 
         let button_arg = args
-            .clone()
+            .as_ref()
             .and_then(|args| args.Arguments().ok())
             .map(|s| s.to_string())
             .filter(|s| !s.is_empty());
@@ -266,7 +266,7 @@ impl ToastManager {
             tag,
             arg: button_arg?,
             values: user_input,
-            input_id,
+            input_id: input_id.map(str::to_owned),
         })
     }
 
