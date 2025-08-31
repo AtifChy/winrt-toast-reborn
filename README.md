@@ -6,6 +6,8 @@
 
 A mostly usable binding to the Windows `ToastNotification` API.
 
+> **Note:** This project is a fork of [kdeconnect-rs/winrt-toast](https://github.com/kmod-midori/kdeconnect-rs/tree/main/winrt-toast).
+
 ## Basic Example
 
 ```rust
@@ -133,4 +135,3 @@ fn main() -> winrt_toast_reborn::Result<()> {
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
-
