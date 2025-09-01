@@ -98,7 +98,7 @@ mod toast;
 pub use toast::{Scenario, Toast, ToastDuration};
 
 mod register;
-pub use register::register;
+pub use register::{register, unregister};
 
 /// Re-export of the `url` crate.
 pub use url;

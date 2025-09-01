@@ -18,6 +18,7 @@ repository = "https://github.com/AtifChy/winrt-toast.git"
 scopeguard = "1.2"
 thiserror = "2.0"
 url = "2.5"
+winreg = "0.55.0"
 
 [dependencies.windows]
 version = "0.61"
@@ -27,7 +28,6 @@ features = [
     "Foundation_Collections",
     "Globalization",
     "UI_Notifications",
-    "Win32_System_Registry",
     "Win32_Storage_FileSystem",
     "Win32_Security",
     "Win32_Foundation",
