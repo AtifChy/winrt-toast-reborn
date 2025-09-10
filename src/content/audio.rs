@@ -1,5 +1,6 @@
 use crate::hs;
 use std::fmt::Debug;
+use url::Url;
 use windows::Data::Xml::Dom::XmlElement;
 
 /// An enum representing the sounds available.
@@ -17,6 +18,8 @@ pub enum Sound {
     SMS,
     /// Enable looping sound. See [`LoopingSound`] for the available sounds.
     Looping(LoopingSound),
+    /// Customize sound by providing the Url (path of the local file)
+    Custom(Url),
     /// No sound.
     None,
 }
@@ -31,6 +34,7 @@ impl Sound {
             Sound::SMS => "SMS",
             Sound::Looping(s) => s.as_str(),
             Sound::None => "",
+            _ => "",
         }
     }
 }
@@ -106,6 +110,11 @@ impl Audio {
         }
     }
 
+    /// Creates a new audio element with custom sound URL.
+    pub fn new_local(url: url::Url) -> Self {
+        Self::new(Sound::Custom(url))
+    }
+
     /// Set the audio to loop.
     pub fn with_looping(mut self) -> Self {
         self.loop_ = true;
@@ -130,6 +139,9 @@ impl Audio {
                         s.as_str(),
                     )),
                 )?;
+            }
+            Sound::Custom(url) => {
+                el.SetAttribute(&hs("src"), &hs(url))?;
             }
             _ => {
                 el.SetAttribute(
